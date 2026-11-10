@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Prompter">
+<title>Prompter by Fourside Studios</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<meta name="version" content="1.0">
+<style>
+  :root {
+    --accent: #F6B800;
+    --dark: #111;
+    --panel: #1b1b1b;
+    --line: #2c2c2c;
+    --text: #f2f2f2;
+    --mute: #9a9a9a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #000; color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    -webkit-text-size-adjust: 100%; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .hidden { display: none !important; }
+
+  /* ---------- Setup view ---------- */
+  #setup { display: grid; grid-template-columns: 260px 1fr 300px; height: 100%; background: var(--dark); }
+  @media (max-width: 1000px) { #setup { grid-template-columns: 1fr; height: auto; min-height: 100%; } }
+  .col { padding: 18px; overflow: auto; border-right: 1px solid var(--line); }
+  .col:last-child { border-right: none; }
+  h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: .04em; }
+  h1 span { color: var(--accent); }
+  .brand { margin: 0; font-size: 13px; color: var(--mute); letter-spacing: .06em; }
+  .lockup { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; margin: 0 -8px 10px; padding: 8px; border-radius: 12px; min-height: 64px; -webkit-tap-highlight-color: transparent; }
+  .lockup:hover, .lockup:active { background: #1f1f1f; }
+  .lockup img { flex: 0 0 auto; border-radius: 11px; display: block; }
+  .lockup-text { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; min-width: 0; }
+  .lockup .brand { white-space: nowrap; font-size: 12px; letter-spacing: .03em; }
+  .lockup-name { font-size: 20px; font-weight: 800; letter-spacing: .06em; color: var(--accent); line-height: 1; }
+  .brand .fs-y { color: var(--accent); font-weight: 800; }
+  .brand .fs-w { color: #fff; font-weight: 800; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--mute); margin: 22px 0 10px; }
+  .sub { color: var(--mute); font-size: 13px; margin: 0 0 14px; }
+  .btn { background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 8px; padding: 10px 14px; }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--accent); color: #111; border-color: var(--accent); font-weight: 700; }
+  .btn.small { padding: 6px 10px; font-size: 13px; }
+  .btn.danger { color: #ff7a7a; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .scripts { list-style: none; margin: 0; padding: 0; }
+  .scripts li { display: flex; align-items: center; gap: 6px; padding: 9px 10px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; border: 1px solid transparent; }
+  .scripts li.active { background: #262626; border-color: #3a3a3a; }
+  .scripts li .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .scripts li .w { color: var(--mute); font-size: 12px; }
+  input[type=text] { width: 100%; background: #0d0d0d; border: 1px solid #333; border-radius: 8px; padding: 10px 12px; }
+  textarea { width: 100%; height: calc(100vh - 230px); min-height: 320px; background: #0d0d0d; border: 1px solid #333; border-radius: 8px; padding: 14px; line-height: 1.5; font-size: 17px; resize: vertical; }
+  .meta { color: var(--mute); font-size: 13px; margin-top: 8px; }
+  label.f { display: block; margin-bottom: 14px; font-size: 14px; }
+  label.f .lv { float: right; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .chk { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 14px; }
+  select { background: #0d0d0d; border: 1px solid #333; border-radius: 8px; padding: 8px; width: 100%; }
+  .keybox { background: #0d0d0d; border: 1px dashed #444; border-radius: 8px; padding: 10px; font-size: 13px; color: var(--mute); }
+  .keybox b { color: var(--text); }
+  .kbd { display: inline-block; background: #2a2a2a; border: 1px solid #444; border-radius: 5px; padding: 1px 7px; font-size: 12px; color: var(--text); margin: 2px 2px 2px 0; }
+  .learn.on { background: var(--accent); color: #111; }
+  .start { width: 100%; padding: 16px; font-size: 18px; margin-top: 6px; }
+
+  /* ---------- Prompter view ---------- */
+  #prompter { position: fixed; inset: 0; background: #000; overflow: hidden; touch-action: none; }
+  #flip { position: absolute; inset: 0; }
+  #content { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
+  #content p { margin: 0 0 .9em; }
+  #content .cue { color: var(--accent); font-style: italic; }
+  #cueline { position: absolute; left: 0; right: 0; height: 0; pointer-events: none; }
+  #cueline::before, #cueline::after { content: ""; position: absolute; top: -14px; border: 14px solid transparent; }
+  #cueline::before { left: 6px; border-left: 22px solid var(--accent); }
+  #cueline::after { right: 6px; border-right: 22px solid var(--accent); }
+  #cueline.bar { border-top: 2px solid rgba(246,184,0,.35); }
+  #fadeTop, #fadeBot { position: absolute; left: 0; right: 0; pointer-events: none; }
+  #fadeTop { top: 0; height: 12%; background: linear-gradient(#000, rgba(0,0,0,0)); }
+  #fadeBot { bottom: 0; height: 12%; background: linear-gradient(rgba(0,0,0,0), #000); }
+  #black { position: absolute; inset: 0; background: #000; z-index: 20; }
+  #countdown { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 30vh; font-weight: 800; color: var(--accent); z-index: 15; pointer-events: none; }
+  #hud { position: absolute; left: 0; right: 0; margin: 0 auto; width: max-content; bottom: 18px; z-index: 30; display: flex; gap: 8px; align-items: center;
+    background: rgba(20,20,20,.88); border: 1px solid #333; border-radius: 14px; padding: 8px; transition: opacity .4s; }
+  #hud.dim { opacity: 0; pointer-events: none; }
+  #hud .btn { min-width: 44px; padding: 11px 10px; font-size: 16px; }
+  #hud .sep { width: 1px; align-self: stretch; background: #333; margin: 0 2px; }
+  #hud { flex-wrap: wrap; justify-content: center; max-width: calc(100% - 24px); }
+  #hud .read { font-variant-numeric: tabular-nums; color: var(--mute); font-size: 13px; padding: 0 4px; white-space: nowrap; min-width: 58px; text-align: center; }
+  #hud .read b { color: var(--accent); }
+  #progress { position: absolute; left: 0; top: 0; height: 4px; background: var(--accent); z-index: 25; width: 0; opacity: .8; }
+  #state { position: absolute; top: 14px; right: 16px; z-index: 25; font-size: 14px; color: var(--mute); background: rgba(0,0,0,.6); padding: 4px 10px; border-radius: 6px; }
+  #toast { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 40; background: var(--accent); color: #111; font-weight: 700; padding: 8px 16px; border-radius: 8px; transition: opacity .3s; opacity: 0; pointer-events: none; }
+  #drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 340px; max-width: 90vw; z-index: 50;
+    background: var(--dark); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgba(0,0,0,.6);
+    display: flex; flex-direction: column; touch-action: pan-y; }
+  #drawer .dhead { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  #drawer .dhead b { letter-spacing: .08em; }
+  #drawerBody { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+  #drawerBody .col { border: none; overflow: visible; }
+  #drawerBody #startBtn { display: none; }
+  /* ---------- Script sidebar ---------- */
+  .sidebar { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+  .side-head { padding: 18px 18px 14px; flex: 0 0 auto; }
+  .side-head .row { margin-bottom: 10px; }
+  .side-head .row .btn { flex: 1 1 0; text-align: center; }
+  .side-head .btn { min-height: 48px; font-size: 15px; display: flex; align-items: center; justify-content: center; }
+  #driveBtn { width: 100%; }
+  .side-divider { height: 1px; background: var(--line); flex: 0 0 auto; }
+  .side-list { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 12px 24px; }
+  .side-list { padding-top: 0; }
+  .side-foot { flex: 0 0 auto; border-top: 1px solid var(--line); padding: 10px 18px; font-size: 12px; color: var(--mute); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; }
+  .update-pill { background: var(--accent); color: #111; border: none; border-radius: 999px; padding: 8px 14px; font-size: 12px; font-weight: 700; min-height: 34px; white-space: nowrap; }
+  .update-pill:active { transform: translateY(1px); }
+  .side-list h2 { padding: 14px 6px 10px; margin: 0 0 4px; position: sticky; top: 0; background: var(--dark); z-index: 1; }
+  .scripts li { min-height: 56px; padding: 12px 14px; font-size: 16px; border-radius: 10px; margin-bottom: 6px; background: #161616; border-color: #232323; }
+  .scripts li:active { background: #2a2a2a; }
+  .scripts li.active { background: #2a2a2a; border-color: var(--accent); }
+  .scripts li .w { font-size: 13px; font-variant-numeric: tabular-nums; }
+  @media (max-width: 1000px) { .sidebar { max-height: 60vh; border-right: none; border-bottom: 1px solid var(--line); } }
+
+  /* ---------- Remote section ---------- */
+  .remote-card { padding: 4px 0 14px; }
+  #remoteSection.off { display: none; }
+  .remote-status { display: flex; align-items: center; gap: 10px; font-size: 15px; margin-bottom: 12px; }
+  .remote-status .dot { width: 10px; height: 10px; border-radius: 50%; background: #555; flex: 0 0 auto; }
+  .remote-status .dot.on { background: var(--accent); box-shadow: 0 0 8px rgba(246,184,0,.6); }
+  #guided { width: 100%; min-height: 52px; }
+  #guideBox { margin-top: 12px; border-color: var(--accent); font-size: 15px; color: var(--text); }
+  .remote-test { margin-top: 12px; font-size: 13px; color: var(--mute); }
+  .remote-test .kbd.hit { background: var(--accent); color: #111; border-color: var(--accent); }
+  details.disclosure { border-top: 1px solid var(--line); }
+  #settingsCol > details.disclosure:last-of-type { border-bottom: 1px solid var(--line); }
+  details.disclosure summary { list-style: none; cursor: pointer; min-height: 54px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+  details.disclosure summary::-webkit-details-marker { display: none; }
+  details.disclosure summary::after { content: ""; width: 9px; height: 9px; border-right: 2px solid var(--mute); border-bottom: 2px solid var(--mute); transform: rotate(-45deg); transition: transform .2s; margin-right: 6px; }
+  details.disclosure[open] summary::after { transform: rotate(45deg); }
+  .disc-body { padding: 2px 0 16px; }
+  .assign { display: flex; flex-direction: column; gap: 6px; }
+  .assign-row { display: flex; align-items: center; justify-content: space-between; min-height: 50px; padding: 0 14px; border-radius: 10px; background: #1a1a1a; border: 1px solid #2c2c2c; font-size: 15px; text-align: left; }
+  .assign-row .ak { color: var(--mute); font-size: 13px; white-space: nowrap; margin-left: 10px; }
+  .assign-row .ak.set { color: var(--accent); }
+  .assign-row.on { background: var(--accent); color: #111; border-color: var(--accent); }
+  .assign-row.on .ak { color: #111; }
+  .shortcuts { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: center; font-size: 14px; }
+
+  /* ---------- Touch-friendly controls ---------- */
+  label.f { margin-bottom: 18px; }
+  .stepper { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .stepper button { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 10px; background: #2a2a2a; border: 1px solid #3a3a3a; font-size: 22px; line-height: 1; padding: 0; }
+  .stepper button:active { background: #3a3a3a; }
+  input[type=range] { -webkit-appearance: none; appearance: none; flex: 1; height: 46px; background: transparent; margin: 0; touch-action: pan-x; }
+  input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: #3a3a3a; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; margin-top: -11px; border-radius: 50%; background: var(--accent); border: 3px solid #111; box-shadow: 0 0 0 1px var(--accent); }
+  input[type=range]::-moz-range-track { height: 8px; border-radius: 4px; background: #3a3a3a; }
+  input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); border: 3px solid #111; }
+  .chk { min-height: 52px; margin-bottom: 6px; padding: 4px 0; cursor: pointer; justify-content: space-between; }
+  .chk label { flex: 1; order: 1; cursor: pointer; }
+  .chk input[type=checkbox] { order: 2; -webkit-appearance: none; appearance: none; flex: 0 0 auto; width: 54px; height: 32px; border-radius: 16px; background: #3a3a3a; position: relative; cursor: pointer; transition: background .2s; margin: 0; }
+  .chk input[type=checkbox]::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; transition: transform .2s; }
+  .chk input[type=checkbox]:checked { background: var(--accent); }
+  .chk input[type=checkbox]:checked::after { transform: translateX(22px); }
+  select { min-height: 48px; font-size: 16px; padding: 10px 12px; }
+  #settingsCol .btn.small { min-height: 44px; padding: 10px 14px; font-size: 15px; }
+  #settingsCol .row .learn { flex: 1 1 calc(50% - 8px); }
+  #guided { min-height: 52px; }
+  #drawer { width: 400px; }
+  #drawer .dhead .btn { min-height: 44px; padding: 10px 20px; font-size: 16px; }
+  #focusTip { position: absolute; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.75); font-size: 22px; color: var(--text); text-align: center; padding: 30px; }
+</style>
+</head>
+<body>
+
+<!-- ======================= SETUP ======================= -->
+<div id="setup">
+  <div class="col sidebar">
+    <div class="side-head">
+    <a class="lockup" href="https://www.foursidestudios.com" target="_blank" rel="noopener" aria-label="Prompter by Fourside Studios, visit foursidestudios.com">
+      <img src="icon.svg" alt="" width="52" height="52">
+      <span class="lockup-text">
+        <span class="lockup-name">PROMPTER</span>
+        <span class="brand">by <b class="fs-y">FOURSIDE</b> <b class="fs-w">STUDIOS</b></span>
+      </span>
+    </a>
+    <p class="sub">Scripts are saved on this device.</p>
+    <div class="row" style="margin-bottom:12px">
+      <button class="btn" id="newScript">+ New</button>
+      <label class="btn" style="margin:0">Import .txt<input type="file" id="importFile" accept=".txt,text/plain" multiple hidden></label>
+    </div>
+    <button class="btn" id="driveBtn">Import from Google Docs</button>
+    <p class="sub hidden" id="driveMsg" style="margin:8px 0 0"></p>
+    </div>
+    <div class="side-divider"></div>
+    <div class="side-list">
+      <h2 style="margin-top:0">Saved scripts</h2>
+      <ul class="scripts" id="scriptList"></ul>
+    </div>
+    <div class="side-foot"><span>Prompter <span id="appVersion"></span> &middot; <a href="privacy.html" target="_blank" rel="noopener" style="color:inherit">Privacy</a></span><button class="update-pill hidden" id="updateBtn" type="button"></button></div>
+  </div>
+
+  <div class="col">
+    <input type="text" id="title" placeholder="Script title">
+    <div style="height:10px"></div>
+    <textarea id="body" placeholder="Paste or type the script here.
+
+Leave a blank line between paragraphs. The clicker can jump paragraph to paragraph.
+
+Put stage notes in brackets, like [PAUSE] or [smile], and they show in yellow."></textarea>
+    <div class="meta" id="meta"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn small danger" id="deleteScript">Delete script</button>
+    </div>
+  </div>
+
+  <div class="col" id="settingsCol">
+    <button class="btn primary start" id="startBtn">Start Prompter</button>
+
+    <h2>Display</h2>
+    <label class="f">Text size <span class="lv" id="sizeV"></span><input type="range" id="size" min="32" max="200" step="2"></label>
+    <label class="f">Line spacing <span class="lv" id="lhV"></span><input type="range" id="lh" min="1.0" max="2.0" step="0.05"></label>
+    <label class="f">Side margins <span class="lv" id="marginV"></span><input type="range" id="margin" min="0" max="30" step="1"></label>
+    <label class="f">Reading line height <span class="lv" id="cueV"></span><input type="range" id="cue" min="10" max="60" step="1"></label>
+    <div class="chk"><input type="checkbox" id="mirrorH"><label for="mirrorH">Mirror left/right (beam-splitter glass)</label></div>
+    <div class="chk"><input type="checkbox" id="mirrorV"><label for="mirrorV">Flip upside down</label></div>
+    <div class="chk"><input type="checkbox" id="cueBar"><label for="cueBar">Show reading line</label></div>
+
+    <h2>Speed</h2>
+    <label class="f">Words per minute <span class="lv" id="wpmV"></span><input type="range" id="wpm" min="60" max="320" step="5"></label>
+    <p class="sub" style="margin-top:-6px">Speed is set in words per minute, so bigger text does not slow the scroll down.</p>
+    <div class="chk"><input type="checkbox" id="countdownOn"><label for="countdownOn">3-2-1 countdown when starting from the top</label></div>
+
+    <h2>Remote</h2>
+    <div class="chk"><input type="checkbox" id="remoteOn"><label for="remoteOn">Use a Bluetooth remote</label></div>
+    <div id="remoteSection">
+    <div class="remote-card">
+      <div class="remote-status"><span class="dot" id="remoteDot"></span><span id="remoteStatus">Works with any Bluetooth clicker</span></div>
+      <button class="btn primary" id="guided">Set up remote</button>
+      <div class="keybox hidden" id="guideBox"></div>
+      <div class="remote-test">Press any remote button to test it: <span class="kbd" id="lastKey">waiting</span></div>
+    </div>
+
+    <details class="disclosure">
+      <summary>Remote options</summary>
+      <div class="disc-body">
+        <label class="f">Next button
+          <select id="mode">
+            <option value="toggle">Starts and pauses scrolling</option>
+            <option value="step">Jumps to the next paragraph</option>
+          </select>
+        </label>
+        <div class="chk"><input type="checkbox" id="holdSpeed"><label for="holdSpeed">Hold Next or Back to change speed</label></div>
+        <p class="sub">Back always returns to the start of the paragraph, or the one above.</p>
+      </div>
+    </details>
+
+    <details class="disclosure">
+      <summary>Button assignments</summary>
+      <div class="disc-body">
+        <p class="sub">Tap an action, then press the remote button you want for it.</p>
+        <div class="assign" id="assignList">
+          <button class="assign-row learn" id="learnPlay"><span>Play / pause</span><span class="ak" data-act="play"></span></button>
+          <button class="assign-row learn" id="learnFaster"><span>Faster</span><span class="ak" data-act="faster"></span></button>
+          <button class="assign-row learn" id="learnSlower"><span>Slower</span><span class="ak" data-act="slower"></span></button>
+          <button class="assign-row learn" id="learnNextPara"><span>Next paragraph</span><span class="ak" data-act="nextPara"></span></button>
+          <button class="assign-row learn" id="learnPrevPara"><span>Previous paragraph</span><span class="ak" data-act="prevPara"></span></button>
+          <button class="assign-row learn" id="learnMirror"><span>Mirror flip</span><span class="ak" data-act="mirror"></span></button>
+          <button class="assign-row learn" id="learnNext"><span>Clicker next</span><span class="ak" data-act="next"></span></button>
+          <button class="assign-row learn" id="learnPrev"><span>Clicker back</span><span class="ak" data-act="prev"></span></button>
+        </div>
+        <button class="btn small" id="resetKeys" style="width:100%;margin-top:10px">Reset all buttons</button>
+        <div id="keybox" class="hidden"></div>
+      </div>
+    </details>
+    </div>
+
+    <details class="disclosure">
+      <summary>Keyboard shortcuts</summary>
+      <div class="disc-body">
+        <div class="shortcuts">
+          <span class="kbd">Space</span><span>Start / pause</span>
+          <span><span class="kbd">&uarr;</span><span class="kbd">&darr;</span></span><span>Faster / slower</span>
+          <span><span class="kbd">[</span><span class="kbd">]</span></span><span>Text size</span>
+          <span class="kbd">Home</span><span>Back to top</span>
+          <span class="kbd">B</span><span>Black screen</span>
+          <span class="kbd">Esc</span><span>Exit</span>
+        </div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- ======================= PROMPTER ======================= -->
+<div id="prompter" class="hidden" tabindex="0">
+  <div id="progress"></div>
+  <div id="flip">
+    <div id="content"></div>
+    <div id="cueline"></div>
+  </div>
+  <div id="fadeTop"></div><div id="fadeBot"></div>
+  <div id="state">Paused</div>
+  <div id="countdown" class="hidden"></div>
+  <div id="black" class="hidden"></div>
+  <div id="toast"></div>
+  <div id="drawer" class="hidden">
+    <div class="dhead"><b>SETTINGS</b><button class="btn small" id="drawerClose">Done</button></div>
+    <div id="drawerBody"></div>
+  </div>
+  <div id="focusTip" class="hidden">Tap anywhere once so the clicker can control the prompter.</div>
+  <div id="hud">
+    <button class="btn" id="hExit" title="Exit">&#10005;</button>
+    <button class="btn" id="hTop" title="Back to top">&#8676;</button>
+    <button class="btn" id="hBack" title="Previous paragraph">&#9650;</button>
+    <button class="btn primary" id="hPlay" title="Start / pause">&#9654;</button>
+    <button class="btn" id="hNext" title="Next paragraph">&#9660;</button>
+    <span class="sep"></span>
+    <button class="btn" id="hSlower" title="Slower">&minus;</button>
+    <span class="read"><b id="hWpm">150</b> wpm</span>
+    <button class="btn" id="hFaster" title="Faster">+</button>
+    <span class="sep"></span>
+    <button class="btn" id="hGear" title="Settings" style="font-size:20px">&#9881;</button>
+    <button class="btn" id="hFull" title="Full screen">&#9974;</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var APP_VERSION = "1.0";
+  var KEY = "fourside-prompter-v1";
+  // Presentation clickers send PageDown/PageUp or Right/Left arrows.
+  // Up/Down arrows stay free for speed control.
+  var DEFAULT_NEXT = ["PageDown", "ArrowRight", "Enter", " "];
+  var DEFAULT_PREV = ["PageUp", "ArrowLeft", "Backspace"];
+  var defaults = {
+    size: 72, lh: 1.35, margin: 8, cue: 30, mirrorH: false, mirrorV: false, cueBar: true,
+    wpm: 150, countdownOn: true, mode: "toggle", nextKeys: null, prevKeys: null,
+    fasterKeys: [], slowerKeys: [], playKeys: [], nextParaKeys: [], prevParaKeys: [], mirrorKeys: [], holdSpeed: true, remoteOn: null
+  };
+  var state = { settings: Object.assign({}, defaults), scripts: [], current: null };
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var d = JSON.parse(raw);
+        state.settings = Object.assign({}, defaults, d.settings || {});
+        state.scripts = Array.isArray(d.scripts) ? d.scripts : [];
+        state.current = d.current || null;
+      }
+    } catch (e) {}
+    if (!state.scripts.length) {
+      state.scripts.push({ id: uid(), title: "Sample script",
+        body: "Welcome to Prompter by Fourside Studios.\n\nPaste your script into the setup screen, with a blank line between paragraphs.\n\n[PAUSE]\n\nWith a clicker paired over Bluetooth, the Next button starts and pauses the scroll, and the Back button jumps to the start of the paragraph so you can take it again.\n\nSpeed is set in words per minute, so large text never holds you back." });
+    }
+    if (!state.current || !find(state.current)) state.current = state.scripts[0].id;
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify({ settings: state.settings, scripts: state.scripts, current: state.current })); } catch (e) {}
+  }
+  function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+  function find(id) { for (var i = 0; i < state.scripts.length; i++) if (state.scripts[i].id === id) return state.scripts[i]; return null; }
+  function words(t) { var m = (t || "").replace(/\[[^\]]*\]/g, " ").match(/\S+/g); return m ? m.length : 0; }
+  function $(id) { return document.getElementById(id); }
+  function nextKeys() { return state.settings.nextKeys || DEFAULT_NEXT; }
+  function prevKeys() { return state.settings.prevKeys || DEFAULT_PREV; }
+  function remoteOn() {
+    var st = state.settings;
+    if (st.remoteOn === true || st.remoteOn === false) return st.remoteOn;
+    return ["fasterKeys", "slowerKeys", "playKeys", "nextParaKeys", "prevParaKeys", "mirrorKeys"].some(function (k) { return (st[k] || []).length; });
+  }
+  function keyName(k) { return k === " " ? "Space" : k; }
+
+  /* ---------------- Setup UI ---------------- */
+  function renderList() {
+    var ul = $("scriptList"); ul.innerHTML = "";
+    state.scripts.forEach(function (s) {
+      var li = document.createElement("li");
+      if (s.id === state.current) li.className = "active";
+      var n = document.createElement("span"); n.className = "n"; n.textContent = s.title || "Untitled";
+      var w = document.createElement("span"); w.className = "w"; w.textContent = mins(words(s.body));
+      li.appendChild(n); li.appendChild(w);
+      li.onclick = function () { state.current = s.id; save(); renderList(); renderEditor(); };
+      ul.appendChild(li);
+    });
+  }
+  function mins(w) {
+    var sec = Math.round(w / state.settings.wpm * 60);
+    return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+  }
+  function renderEditor() {
+    var s = find(state.current);
+    $("title").value = s ? s.title : "";
+    $("body").value = s ? s.body : "";
+    renderMeta();
+  }
+  function renderMeta() {
+    var s = find(state.current); var w = words(s ? s.body : "");
+    $("meta").textContent = w + " words, about " + mins(w) + " at " + state.settings.wpm + " wpm";
+  }
+  function renderSettings() {
+    var st = state.settings;
+    ["size", "lh", "margin", "cue", "wpm"].forEach(function (k) { $(k).value = st[k]; });
+    ["mirrorH", "mirrorV", "cueBar", "countdownOn", "holdSpeed"].forEach(function (k) { $(k).checked = !!st[k]; });
+    $("remoteOn").checked = remoteOn(); $("remoteSection").classList.toggle("off", !remoteOn());
+    $("mode").value = st.mode;
+    $("sizeV").textContent = st.size + "px";
+    $("lhV").textContent = Number(st.lh).toFixed(2);
+    $("marginV").textContent = st.margin + "%";
+    $("cueV").textContent = st.cue + "% from top";
+    $("wpmV").textContent = st.wpm;
+    var kb = $("keybox");
+    function chips(list) { return list && list.length ? list.map(function (k) { return '<span class="kbd">' + esc(keyName(k)) + "</span>"; }).join("") : "not set"; }
+    kb.innerHTML = "<b>Next:</b> " + chips(nextKeys()) + "<br><b>Back:</b> " + chips(prevKeys()) +
+      "<br><b>Play/Pause:</b> " + chips(st.playKeys) +
+      "<br><b>Faster:</b> " + chips(st.fasterKeys) + "<br><b>Slower:</b> " + chips(st.slowerKeys) +
+      "<br><b>Next paragraph:</b> " + chips(st.nextParaKeys) + "<br><b>Previous paragraph:</b> " + chips(st.prevParaKeys) +
+      "<br><b>Mirror flip:</b> " + chips(st.mirrorKeys);
+    renderAssign();
+  }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function bindSetup() {
+    $("newScript").onclick = function () {
+      var s = { id: uid(), title: "Untitled script", body: "" };
+      state.scripts.unshift(s); state.current = s.id; save(); renderList(); renderEditor(); $("title").focus(); $("title").select();
+    };
+    $("deleteScript").onclick = function () {
+      var btn = $("deleteScript");
+      if (btn.dataset.armed !== "1") { btn.dataset.armed = "1"; btn.textContent = "Tap again to delete"; setTimeout(function () { btn.dataset.armed = ""; btn.textContent = "Delete script"; }, 3000); return; }
+      btn.dataset.armed = ""; btn.textContent = "Delete script";
+      state.scripts = state.scripts.filter(function (s) { return s.id !== state.current; });
+      if (!state.scripts.length) state.scripts.push({ id: uid(), title: "Untitled script", body: "" });
+      state.current = state.scripts[0].id; save(); renderList(); renderEditor();
+    };
+    $("title").oninput = function () { var s = find(state.current); if (s) { s.title = this.value; save(); renderList(); } };
+    $("body").oninput = function () { var s = find(state.current); if (s) { s.body = this.value; save(); renderMeta(); renderList(); } };
+    $("importFile").onchange = function () {
+      var files = Array.prototype.slice.call(this.files || []); var input = this;
+      var pending = files.length; if (!pending) return;
+      files.forEach(function (f) {
+        var r = new FileReader();
+        r.onload = function () {
+          var s = { id: uid(), title: f.name.replace(/\.txt$/i, ""), body: String(r.result || "") };
+          state.scripts.push(s); state.current = s.id;
+          if (--pending === 0) { save(); renderList(); renderEditor(); input.value = ""; }
+        };
+        r.readAsText(f);
+      });
+    };
+    ["size", "lh", "margin", "cue", "wpm"].forEach(function (k) {
+      $(k).oninput = function () { state.settings[k] = Number(this.value); save(); renderSettings(); renderMeta(); renderList(); relayoutKeep(); };
+    });
+    ["mirrorH", "mirrorV", "cueBar", "countdownOn", "holdSpeed"].forEach(function (k) {
+      $(k).onchange = function () { state.settings[k] = this.checked; save(); relayoutKeep(); };
+    });
+    $("mode").onchange = function () { state.settings.mode = this.value; save(); };
+    $("remoteOn").onchange = function () { state.settings.remoteOn = this.checked; save(); renderSettings(); };
+    $("learnNext").onclick = function () { startLearn("next"); };
+    $("learnPrev").onclick = function () { startLearn("prev"); };
+    $("learnFaster").onclick = function () { startLearn("faster"); };
+    $("learnSlower").onclick = function () { startLearn("slower"); };
+    $("learnPlay").onclick = function () { startLearn("play"); };
+    $("learnNextPara").onclick = function () { startLearn("nextPara"); };
+    $("learnPrevPara").onclick = function () { startLearn("prevPara"); };
+    $("learnMirror").onclick = function () { startLearn("mirror"); };
+    $("guided").onclick = startGuide;
+    $("resetKeys").onclick = function () { var st = state.settings; st.nextKeys = null; st.prevKeys = null;
+      ["fasterKeys", "slowerKeys", "playKeys", "nextParaKeys", "prevParaKeys", "mirrorKeys"].forEach(function (k) { st[k] = []; }); save(); renderSettings(); };
+    $("startBtn").onclick = openPrompter;
+  }
+
+  var learning = null;
+  var LEARN = { next: ["learnNext", "Learn Next button"], prev: ["learnPrev", "Learn Back button"],
+                faster: ["learnFaster", "Learn Faster button"], slower: ["learnSlower", "Learn Slower button"],
+                play: ["learnPlay", "Learn Play/Pause"], nextPara: ["learnNextPara", "Learn Next paragraph"],
+                prevPara: ["learnPrevPara", "Learn Previous paragraph"], mirror: ["learnMirror", "Learn Mirror flip"] };
+  var LIST = { faster: "fasterKeys", slower: "slowerKeys", play: "playKeys", nextPara: "nextParaKeys", prevPara: "prevParaKeys", mirror: "mirrorKeys" };
+  function resetLearnButtons() {
+    Object.keys(LEARN).forEach(function (k) { $(LEARN[k][0]).classList.remove("on"); });
+    renderAssign();
+  }
+  function startLearn(which) {
+    resetLearnButtons(); learning = which;
+    var b = $(LEARN[which][0]); b.classList.add("on");
+    var ak = b.querySelector(".ak"); if (ak) ak.textContent = "Press a remote button";
+  }
+  function shortKey(k) {
+    var m = { "ArrowRight": "\u2192", "ArrowLeft": "\u2190", "ArrowUp": "\u2191", "ArrowDown": "\u2193",
+              "PageDown": "Pg Dn", "PageUp": "Pg Up", " ": "Space", "Backspace": "Delete", "Escape": "Esc" };
+    return m[k] || k;
+  }
+  function keysFor(act) {
+    var st = state.settings;
+    if (act === "next") return nextKeys();
+    if (act === "prev") return prevKeys();
+    return st[LIST[act]] || [];
+  }
+  function renderAssign() {
+    Array.prototype.forEach.call(document.querySelectorAll(".ak"), function (el) {
+      var ks = keysFor(el.dataset.act);
+      el.textContent = ks.length ? ks.slice(0, 2).map(shortKey).join(", ") + (ks.length > 2 ? " +" + (ks.length - 2) : "") : "Not set";
+      el.classList.toggle("set", ks.length > 0);
+    });
+    var st = state.settings, n = 0;
+    Object.keys(LIST).forEach(function (a) { if ((st[LIST[a]] || []).length) n++; });
+    $("remoteDot").classList.toggle("on", n > 0);
+    $("remoteStatus").textContent = n > 0 ? "Remote set up: " + n + " of 6 buttons assigned" : "Works with any Bluetooth clicker";
+  }
+  function finishLearn(key) {
+    var st = state.settings;
+    // A key belongs to one action only.
+    function drop(list) { return (list || []).filter(function (k) { return k !== key; }); }
+    Object.keys(LIST).forEach(function (a) { st[LIST[a]] = drop(st[LIST[a]]); });
+    st.nextKeys = drop(nextKeys()); st.prevKeys = drop(prevKeys());
+    if (learning === "next") st.nextKeys = [key];
+    else if (learning === "prev") st.prevKeys = [key];
+    else st[LIST[learning]] = [key];
+    learning = null; resetLearnButtons(); save(); renderSettings();
+    if (guide) guideStep();
+  }
+
+  // Guided setup: walk through each remote button once. Any button can be skipped.
+  var GUIDE = [
+    ["play", "Press the PLAY / PAUSE button"],
+    ["faster", "Press the button you want for FASTER (speed up)"],
+    ["slower", "Press the button you want for SLOWER (slow down)"],
+    ["nextPara", "Press the CUE / CHAPTER FORWARD button (next paragraph)"],
+    ["prevPara", "Press the CUE / CHAPTER BACK button (previous paragraph)"],
+    ["mirror", "Press the MIRROR FLIP button"]
+  ];
+  var guide = null;
+  function startGuide() {
+    var st = state.settings;
+    // Teleprompter remotes have their own play button, so free up Next/Back defaults that a remote might reuse.
+    guide = { i: -1 }; $("guideBox").classList.remove("hidden"); guideStep();
+  }
+  function guideStep() {
+    guide.i++;
+    var box = $("guideBox");
+    if (guide.i >= GUIDE.length) {
+      guide = null; learning = null;
+      box.innerHTML = "<b>Remote is set up.</b> Start the prompter and try each button. You can relearn any single button below.";
+      setTimeout(function () { box.classList.add("hidden"); }, 6000);
+      return;
+    }
+    var g = GUIDE[guide.i];
+    learning = g[0];
+    box.innerHTML = "<b>Step " + (guide.i + 1) + " of " + GUIDE.length + ":</b> " + g[1] +
+      '<div class="row" style="margin-top:8px"><button class="btn small" id="guideSkip">Skip this one</button><button class="btn small" id="guideStop">Stop</button></div>';
+    $("guideSkip").onclick = function () { learning = null; guideStep(); };
+    $("guideStop").onclick = function () { guide = null; learning = null; box.classList.add("hidden"); };
+  }
+
+  /* ---------------- Prompter ---------------- */
+  var P = { open: false, playing: false, pos: 0, max: 0, pxPerSec: 0, last: 0, raf: 0, paras: [], anim: null, wordCount: 1, hudTimer: 0, countdown: 0 };
+  var content = $("content"), prompter = $("prompter");
+
+  function openPrompter() {
+    var s = find(state.current); if (!s) return;
+    var st = state.settings;
+    content.innerHTML = "";
+    var blocks = (s.body || "").replace(/\r/g, "").split(/\n\s*\n/).map(function (b) { return b.trim(); }).filter(Boolean);
+    if (!blocks.length) blocks = ["(This script is empty.)"];
+    blocks.forEach(function (b) {
+      var p = document.createElement("p");
+      var parts = b.split(/(\[[^\]]*\])/);
+      parts.forEach(function (part) {
+        if (!part) return;
+        if (/^\[[^\]]*\]$/.test(part)) { var c = document.createElement("span"); c.className = "cue"; c.textContent = part; p.appendChild(c); }
+        else { p.appendChild(document.createTextNode(part)); }
+      });
+      p.style.whiteSpace = "pre-wrap";
+      content.appendChild(p);
+    });
+    P.wordCount = Math.max(1, words(s.body));
+    $("setup").classList.add("hidden");
+    prompter.classList.remove("hidden");
+    applyStyle();
+    P.open = true; P.playing = false; P.pos = 0; P.anim = null;
+    layout(); render(); setState();
+    try { prompter.focus({ preventScroll: true }); } catch (e) { prompter.focus(); }
+    requestWakeLock();
+    showHud();
+    cancelAnimationFrame(P.raf); P.last = performance.now(); P.raf = requestAnimationFrame(tick);
+    setTimeout(function () { if (P.open && document.activeElement !== prompter) $("focusTip").classList.remove("hidden"); }, 400);
+  }
+  var drawerOpen = false;
+  function openDrawer() {
+    pause();
+    $("drawerBody").appendChild($("settingsCol"));
+    $("drawer").classList.remove("hidden"); drawerOpen = true; $("focusTip").classList.add("hidden");
+    renderSettings();
+  }
+  function closeDrawer() {
+    if (!drawerOpen) return;
+    $("setup").appendChild($("settingsCol"));
+    $("drawer").classList.add("hidden"); drawerOpen = false;
+    try { prompter.focus({ preventScroll: true }); } catch (e) { prompter.focus(); }
+    showHud();
+  }
+  function closePrompter() {
+    closeDrawer();
+    P.open = false; P.playing = false; cancelAnimationFrame(P.raf); clearCountdown();
+    releaseWakeLock();
+    prompter.classList.add("hidden"); $("setup").classList.remove("hidden"); $("black").classList.add("hidden");
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+  }
+  function applyStyle() {
+    var st = state.settings;
+    content.style.fontSize = st.size + "px";
+    content.style.lineHeight = st.lh;
+    content.style.padding = "0 " + st.margin + "%";
+    content.style.fontWeight = "600";
+    var sx = st.mirrorH ? -1 : 1, sy = st.mirrorV ? -1 : 1;
+    $("flip").style.transform = "scale(" + sx + "," + sy + ")";
+    $("cueline").style.top = st.cue + "%";
+    $("cueline").classList.toggle("bar", !!st.cueBar);
+    $("hWpm").textContent = st.wpm;
+  }
+  function cueY() { return prompter.clientHeight * state.settings.cue / 100; }
+  function layout() {
+    var h = content.scrollHeight;
+    P.paras = Array.prototype.map.call(content.children, function (el) { return el.offsetTop; });
+    var lastP = content.lastElementChild;
+    P.max = lastP ? lastP.offsetTop + lastP.offsetHeight : h;
+    // pixels per word from the real layout, so speed holds at any text size
+    P.pxPerSec = (P.max / P.wordCount) * (state.settings.wpm / 60);
+    if (P.pos > P.max) P.pos = P.max;
+  }
+  function render() {
+    content.style.transform = "translate3d(0," + (cueY() - P.pos) + "px,0)";
+    $("progress").style.width = (P.max ? Math.min(100, P.pos / P.max * 100) : 0) + "%";
+  }
+  function tick(now) {
+    var dt = Math.min(0.1, (now - P.last) / 1000); P.last = now;
+    if (P.anim) {
+      var a = P.anim, t = Math.min(1, (now - a.t0) / a.dur), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      P.pos = a.from + (a.to - a.from) * e;
+      if (t >= 1) P.anim = null;
+    } else if (P.playing) {
+      P.pos += P.pxPerSec * dt;
+      if (P.pos >= P.max) { P.pos = P.max; P.playing = false; setState(); toast("End of script"); }
+    }
+    render();
+    if (P.open) P.raf = requestAnimationFrame(tick);
+  }
+  function setState() {
+    $("state").textContent = (P.countdown ? "Starting" : (P.playing ? "Rolling" : "Paused")) + " \u00b7 " + state.settings.wpm + " wpm";
+    $("state").style.color = P.playing ? "#F6B800" : "";
+    $("hPlay").innerHTML = P.playing ? "&#10074;&#10074;" : "&#9654;";
+  }
+  function play() {
+    if (P.countdown) return;
+    if (P.pos >= P.max - 1) P.pos = 0;
+    if (P.pos < 2 && state.settings.countdownOn) { runCountdown(); return; }
+    P.anim = null; P.playing = true; setState();
+  }
+  function pause() { clearCountdown(); P.playing = false; setState(); }
+  function toggle() { if (P.playing || P.countdown) pause(); else play(); }
+  function runCountdown() {
+    var n = 3, el = $("countdown");
+    el.textContent = n; el.classList.remove("hidden"); P.countdown = 1; setState();
+    P.countdownTimer = setInterval(function () {
+      n--;
+      if (n <= 0) { clearCountdown(); P.anim = null; P.playing = true; setState(); }
+      else el.textContent = n;
+    }, 800);
+  }
+  function clearCountdown() { if (P.countdownTimer) clearInterval(P.countdownTimer); P.countdownTimer = 0; P.countdown = 0; $("countdown").classList.add("hidden"); }
+  function currentIndex() {
+    var i = 0; for (var k = 0; k < P.paras.length; k++) if (P.paras[k] <= P.pos + 2) i = k; return i;
+  }
+  function goTo(y) {
+    y = Math.max(0, Math.min(P.max, y));
+    P.anim = { from: P.pos, to: y, t0: performance.now(), dur: 380 };
+  }
+  function nextPara() {
+    var i = currentIndex();
+    if (i + 1 < P.paras.length) goTo(P.paras[i + 1]); else goTo(P.max);
+  }
+  function backPara() {
+    var wasPlaying = P.playing; pause();
+    var i = currentIndex();
+    var target = (P.pos - P.paras[i] > 20) ? P.paras[i] : P.paras[Math.max(0, i - 1)];
+    goTo(target);
+    if (wasPlaying) toast("Back a paragraph, paused");
+  }
+  function onNext() { if (state.settings.mode === "step") { pause(); nextPara(); } else toggle(); }
+  function changeWpm(d) {
+    var st = state.settings;
+    st.wpm = Math.max(60, Math.min(320, st.wpm + d)); save();
+    $("hWpm").textContent = st.wpm; layout(); setState(); renderSettings(); toast(st.wpm + " wpm");
+  }
+  // Re-apply styles while keeping the same words on the reading line:
+  // remember the paragraph and how far into it we are, then restore after layout.
+  function relayoutKeep() {
+    if (!P.open) return;
+    P.anim = null;
+    var i = currentIndex(), el = content.children[i];
+    var frac = el && el.offsetHeight ? (P.pos - P.paras[i]) / el.offsetHeight : 0;
+    applyStyle(); layout();
+    el = content.children[i];
+    P.pos = el ? P.paras[i] + frac * el.offsetHeight : 0;
+    render(); setState();
+  }
+  function changeSize(d) {
+    var st = state.settings, ns = Math.max(32, Math.min(200, st.size + d));
+    if (ns === st.size) return;
+    st.size = ns; save(); relayoutKeep(); renderSettings(); toast("Text " + ns + "px");
+  }
+  function toTop() { pause(); goTo(0); }
+  function toggleBlack() { $("black").classList.toggle("hidden"); }
+
+  var toastT = 0;
+  function toast(msg) { var t = $("toast"); t.textContent = msg; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(function () { t.style.opacity = 0; }, 1100); }
+  function showHud() {
+    var h = $("hud"); h.classList.remove("dim"); clearTimeout(P.hudTimer);
+    P.hudTimer = setTimeout(function () { if (P.playing && !drawerOpen) h.classList.add("dim"); else showHudSoon(); }, 3000);
+  }
+  function showHudSoon() { clearTimeout(P.hudTimer); P.hudTimer = setTimeout(function () { if (P.playing) $("hud").classList.add("dim"); else showHudSoon(); }, 1500); }
+
+  function bindPrompter() {
+    $("hExit").onclick = closePrompter;
+    $("hGear").onclick = function () { if (drawerOpen) closeDrawer(); else openDrawer(); };
+    $("drawerClose").onclick = closeDrawer;
+    $("drawer").addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+    $("drawer").addEventListener("pointerup", function (e) { e.stopPropagation(); });
+    $("hTop").onclick = toTop;
+    $("hBack").onclick = backPara;
+    $("hNext").onclick = function () { pause(); nextPara(); };
+    $("hPlay").onclick = toggle;
+    $("hSlower").onclick = function () { changeWpm(-5); };
+    $("hFaster").onclick = function () { changeWpm(5); };
+    $("hFull").onclick = function () {
+      var el = document.documentElement;
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+        else { var r = (el.requestFullscreen || el.webkitRequestFullscreen); if (r) { var pr = r.call(el); if (pr && pr.catch) pr.catch(function () { toast("Full screen not available here"); }); } else toast("Full screen not available here"); }
+      } catch (e) { toast("Full screen not available here"); }
+    };
+    // Tap on the text area toggles play; the HUD buttons stop propagation.
+    $("hud").addEventListener("pointerdown", function (e) { e.stopPropagation(); showHud(); });
+    prompter.addEventListener("pointerdown", function () {
+      $("focusTip").classList.add("hidden");
+      try { prompter.focus({ preventScroll: true }); } catch (e) {}
+      showHud();
+    });
+    // Drag with a finger to scrub the script while paused.
+    var drag = null;
+    prompter.addEventListener("pointerdown", function (e) { if (e.target.closest && e.target.closest("#hud")) return; drag = { y: e.clientY, pos: P.pos, moved: false }; });
+    prompter.addEventListener("pointermove", function (e) {
+      if (!drag) return; var dy = e.clientY - drag.y;
+      if (Math.abs(dy) > 8) drag.moved = true;
+      if (drag.moved) { P.anim = null; if (P.playing) pause(); var dir = state.settings.mirrorV ? -1 : 1; P.pos = Math.max(0, Math.min(P.max, drag.pos - dy * dir)); }
+    });
+    prompter.addEventListener("pointerup", function () { if (drag && !drag.moved) toggle(); drag = null; });
+    prompter.addEventListener("pointercancel", function () { drag = null; });
+    window.addEventListener("resize", function () { if (P.open) { layout(); render(); } });
+  }
+
+  document.addEventListener("keydown", function (e) {
+    var lk = $("lastKey"); lk.textContent = keyName(e.key);
+    lk.classList.add("hit"); clearTimeout(lk._t); lk._t = setTimeout(function () { lk.classList.remove("hit"); }, 500);
+    if (learning) { e.preventDefault(); finishLearn(e.key); return; }
+    if (!P.open) return;
+    if (drawerOpen) {
+      if (e.key === "Escape") { e.preventDefault(); closeDrawer(); return; }
+      var tg = e.target && e.target.tagName;
+      if (tg === "INPUT" || tg === "SELECT" || tg === "TEXTAREA" || tg === "BUTTON") return;
+    }
+    var k = e.key, st = state.settings, rOn = remoteOn();
+    if (rOn && st.playKeys.indexOf(k) !== -1) { e.preventDefault(); if (!e.repeat) toggle(); showHudQuiet(); return; }
+    if (rOn && st.nextParaKeys.indexOf(k) !== -1) { e.preventDefault(); if (!e.repeat) { var wp = P.playing; nextPara(); if (!wp) pause(); } showHudQuiet(); return; }
+    if (rOn && st.prevParaKeys.indexOf(k) !== -1) { e.preventDefault(); if (!e.repeat) backPara(); showHudQuiet(); return; }
+    if (rOn && st.mirrorKeys.indexOf(k) !== -1) { e.preventDefault(); if (!e.repeat) { st.mirrorH = !st.mirrorH; save(); applyStyle(); renderSettings(); toast(st.mirrorH ? "Mirrored" : "Normal"); } return; }
+    if (rOn && st.fasterKeys.indexOf(k) !== -1) { e.preventDefault(); changeWpm(5); showHudQuiet(); return; }
+    if (rOn && st.slowerKeys.indexOf(k) !== -1) { e.preventDefault(); changeWpm(-5); showHudQuiet(); return; }
+    var isNext = nextKeys().indexOf(k) !== -1;
+    var isPrev = prevKeys().indexOf(k) !== -1;
+    if (isNext || isPrev) {
+      e.preventDefault(); showHudQuiet();
+      if (!st.holdSpeed || !rOn) { if (!e.repeat) (isNext ? onNext : backPara)(); return; }
+      // Hold detection: a quick press acts on release; holding past the
+      // threshold changes speed in steps instead, and the release does nothing.
+      if (e.repeat || held[k]) return;
+      var h = held[k] = { dir: isNext ? 1 : -1, adjusted: false, timer: 0 };
+      h.timer = setTimeout(function step() {
+        h.adjusted = true; changeWpm(5 * h.dir);
+        h.timer = setTimeout(step, 250);
+      }, 450);
+      return;
+    }
+    if (k === "ArrowUp" || k === "+" || k === "=") { e.preventDefault(); changeWpm(5); return; }
+    if (k === "ArrowDown" || k === "-" || k === "_") { e.preventDefault(); changeWpm(-5); return; }
+    if (k === "Home") { e.preventDefault(); toTop(); return; }
+    if (k === "[") { e.preventDefault(); changeSize(-4); return; }
+    if (k === "]") { e.preventDefault(); changeSize(4); return; }
+    if (k === "b" || k === "B" || k === "." ) { e.preventDefault(); toggleBlack(); return; }
+    if (k === "Escape" || k === "F5") { e.preventDefault(); closePrompter(); return; }
+  });
+  function showHudQuiet() { $("focusTip").classList.add("hidden"); }
+  var held = {};
+  document.addEventListener("keyup", function (e) {
+    var h = held[e.key]; if (!h) return;
+    clearTimeout(h.timer); delete held[e.key];
+    if (!P.open) return;
+    e.preventDefault();
+    if (!h.adjusted) { if (h.dir > 0) onNext(); else backPara(); }
+  });
+  window.addEventListener("blur", function () { Object.keys(held).forEach(function (k) { clearTimeout(held[k].timer); }); held = {}; });
+
+  var wakeLock = null;
+  function requestWakeLock() {
+    try { if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request("screen").then(function (l) { wakeLock = l; }).catch(function () {}); } catch (e) {}
+  }
+  function releaseWakeLock() { try { if (wakeLock) wakeLock.release(); } catch (e) {} wakeLock = null; }
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && P.open) requestWakeLock(); });
+
+  /* ---------------- Google Docs import ----------------
+     Uses Google Identity Services for sign-in and the Google Picker to choose
+     Docs. Scope is drive.file, so the app only ever sees the files the user
+     picks. Fill in the three values below from your Google Cloud project, and
+     add the page's address as an Authorized JavaScript origin on the client ID. */
+  var GOOGLE = {
+    clientId: "",   // OAuth 2.0 Client ID (Web application)
+    apiKey: "",     // API key, restricted to the Picker API and your domain
+    appId: ""       // Google Cloud project number
+  };
+  var drive = { token: null, tokenClient: null, ready: false, loading: false };
+  function driveMsg(t) { var m = $("driveMsg"); m.textContent = t; m.classList.toggle("hidden", !t); }
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var el = document.createElement("script"); el.src = src; el.async = true;
+      el.onload = res; el.onerror = function () { rej(new Error("blocked")); };
+      document.head.appendChild(el);
+    });
+  }
+  function driveInit() {
+    if (drive.ready) return Promise.resolve();
+    if (!GOOGLE.clientId || !GOOGLE.apiKey) return Promise.reject(new Error("notconfigured"));
+    return Promise.all([loadScript("https://accounts.google.com/gsi/client"), loadScript("https://apis.google.com/js/api.js")])
+      .then(function () { return new Promise(function (res) { window.gapi.load("picker", res); }); })
+      .then(function () { drive.ready = true; });
+  }
+  function driveToken() {
+    return new Promise(function (res, rej) {
+      if (!drive.tokenClient) {
+        drive.tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE.clientId,
+          scope: "https://www.googleapis.com/auth/drive.file",
+          callback: function () {}
+        });
+      }
+      drive.tokenClient.callback = function (r) { if (r && r.access_token) { drive.token = r.access_token; res(r.access_token); } else rej(new Error("denied")); };
+      drive.tokenClient.error_callback = function () { rej(new Error("denied")); };
+      drive.tokenClient.requestAccessToken({ prompt: drive.token ? "" : "consent" });
+    });
+  }
+  function drivePick(token) {
+    return new Promise(function (res) {
+      var view = new google.picker.DocsView(google.picker.ViewId.DOCUMENTS).setIncludeFolders(true).setSelectFolderEnabled(false);
+      var b = new google.picker.PickerBuilder()
+        .addView(view)
+        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+        .setOAuthToken(token)
+        .setDeveloperKey(GOOGLE.apiKey)
+        .setTitle("Choose scripts to import")
+        .setCallback(function (data) {
+          if (data.action === google.picker.Action.PICKED) res(data.docs || []);
+          else if (data.action === google.picker.Action.CANCEL) res([]);
+        });
+      if (GOOGLE.appId) b.setAppId(GOOGLE.appId);
+      b.build().setVisible(true);
+    });
+  }
+  function driveExport(token, doc) {
+    var url = "https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(doc.id) + "/export?mimeType=text%2Fplain";
+    return fetch(url, { headers: { Authorization: "Bearer " + token } }).then(function (r) {
+      if (!r.ok) throw new Error("export " + r.status); return r.text();
+    }).then(function (text) {
+      // Docs export one paragraph per line; the prompter splits on blank lines.
+      var body = text.replace(/^\uFEFF/, "").replace(/\r/g, "").split("\n").map(function (l) { return l.trim(); }).filter(Boolean).join("\n\n");
+      return { id: uid(), title: doc.name || "Google Doc", body: body };
+    });
+  }
+  function driveImport() {
+    if (drive.loading) return; drive.loading = true;
+    driveMsg("Connecting to Google Drive...");
+    driveInit()
+      .then(driveToken)
+      .then(function (token) { driveMsg(""); return drivePick(token).then(function (docs) { return { token: token, docs: docs }; }); })
+      .then(function (r) {
+        if (!r.docs.length) return [];
+        driveMsg("Importing " + r.docs.length + " script" + (r.docs.length > 1 ? "s" : "") + "...");
+        return Promise.all(r.docs.map(function (d) { return driveExport(r.token, d); }));
+      })
+      .then(function (scripts) {
+        if (scripts.length) {
+          scripts.forEach(function (sc) { state.scripts.push(sc); });
+          state.current = scripts[scripts.length - 1].id; save(); renderList(); renderEditor();
+          driveMsg("Imported " + scripts.length + " script" + (scripts.length > 1 ? "s" : "") + ".");
+          setTimeout(function () { driveMsg(""); }, 3000);
+        } else driveMsg("");
+      })
+      .catch(function (e) {
+        var m = String(e && e.message || e);
+        if (m === "notconfigured") driveMsg("Google Docs import isn't set up on this copy of Prompter yet.");
+        else if (m === "blocked") driveMsg("Google Docs import can't load here. Open Prompter from its own web address to use it.");
+        else if (m === "denied") driveMsg("Google sign-in was cancelled.");
+        else driveMsg("Couldn't import from Google Drive. Please try again.");
+      })
+      .then(function () { drive.loading = false; });
+  }
+
+  // Big -/+ buttons beside every slider for fingers; press and hold repeats.
+  function addSteppers() {
+    Array.prototype.forEach.call(document.querySelectorAll("#settingsCol input[type=range]"), function (r) {
+      var wrap = document.createElement("div"); wrap.className = "stepper";
+      var minus = document.createElement("button"); minus.type = "button"; minus.innerHTML = "&minus;"; minus.setAttribute("aria-label", "Decrease");
+      var plus = document.createElement("button"); plus.type = "button"; plus.textContent = "+"; plus.setAttribute("aria-label", "Increase");
+      r.parentNode.insertBefore(wrap, r); wrap.appendChild(minus); wrap.appendChild(r); wrap.appendChild(plus);
+      function bump(dir) {
+        var step = Number(r.step) || 1, v = Number(r.value) + dir * step;
+        v = Math.max(Number(r.min), Math.min(Number(r.max), v));
+        r.value = String(Math.round(v / step) * step);
+        r.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      [[minus, -1], [plus, 1]].forEach(function (pair) {
+        var btn = pair[0], dir = pair[1], t1 = 0, t2 = 0;
+        function stop() { clearTimeout(t1); clearInterval(t2); }
+        btn.addEventListener("pointerdown", function (e) { e.preventDefault(); bump(dir); t1 = setTimeout(function () { t2 = setInterval(function () { bump(dir); }, 90); }, 400); });
+        ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) { btn.addEventListener(ev, stop); });
+        btn.addEventListener("click", function (e) { e.preventDefault(); });
+      });
+    });
+  }
+  // Tapping anywhere on a toggle row flips it.
+  Array.prototype.forEach.call(document.querySelectorAll(".chk"), function (row) {
+    row.addEventListener("click", function (e) {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "LABEL") return;
+      var cb = row.querySelector("input[type=checkbox]"); cb.checked = !cb.checked; cb.dispatchEvent(new Event("change"));
+    });
+  });
+
+  $("appVersion").textContent = "v" + APP_VERSION;
+
+  /* ---------------- Update check ----------------
+     version.json sits next to index.html. To ship an update, bump APP_VERSION
+     above and "version" in version.json together. The check never interrupts:
+     it only shows a pill in the sidebar footer. */
+  function cmpVer(a, b) {
+    var x = String(a).split("."), y = String(b).split(".");
+    for (var i = 0; i < Math.max(x.length, y.length); i++) {
+      var d = (parseInt(x[i], 10) || 0) - (parseInt(y[i], 10) || 0);
+      if (d) return d > 0 ? 1 : -1;
+    }
+    return 0;
+  }
+  var lastCheck = 0;
+  function checkUpdate() {
+    if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
+    try {
+      fetch("version.json?t=" + Date.now(), { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (!j || !j.version || cmpVer(j.version, APP_VERSION) <= 0) return;
+          var b = $("updateBtn");
+          b.textContent = "Update to v" + j.version;
+          b.title = j.notes || "";
+          b.classList.remove("hidden");
+        })
+        .catch(function () {});
+    } catch (e) {}
+  }
+  $("updateBtn").onclick = function () {
+    if (P.open) return;
+    location.reload();
+  };
+  setTimeout(checkUpdate, 1500);
+  setInterval(checkUpdate, 6 * 60 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") checkUpdate(); });
+  load(); addSteppers(); bindSetup(); bindPrompter(); renderSettings(); renderList(); renderEditor();
+  $("driveBtn").onclick = driveImport;
+})();
+</script>
+</body>
+</html>
